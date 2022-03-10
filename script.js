@@ -5,7 +5,7 @@ function fpsCounterRound() {
   let time = Date.now();
   frame++;
   if (time - startTime > 1000) {
-      console.log( (frame / ((time - startTime) / 1000)).toFixed(1) )
+      console.log( 'fps: ' + (frame / ((time - startTime) / 1000)).toFixed(1) )
       startTime = time;
       frame = 0;
     }
@@ -24,9 +24,11 @@ const context = canvas.getContext('2d');
 
 const gameFps = 60;
 
-const tile_size = 64;
+const tile_size = 32;
 
 const playerSize = 10;
+
+let fucknes = 1;
 
 const colors = {
     rays: '#00FF00',
@@ -36,7 +38,7 @@ const colors = {
     floor: '#FFBF00'
 }
 
-const fov = toRadians(90)
+let fov = toRadians(90)
 
 const map = [
     [1, 1, 1, 1, 1, 1, 1],
@@ -45,15 +47,33 @@ const map = [
     [1, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1]
+    [1, 1, 1, 0, 1, 1, 1],
+    [1, 0, 1, 0, 1, 0, 1],
+    [1, 0, 0, 0, 1, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 0, 1, 1],
+    [1, 0, 0, 1, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 0, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1],
 ];
 
 const player = {
-    x: tile_size * 1.5,
-    y: tile_size * 1.5,
-    angle: 0,
-    speed: 0
+    x: tile_size * 3.5,
+    y: tile_size * 3.5,
+    angle: toRadians(90),
+    speed: 0,
+    sideSpeed: 0
 }
+
+let fovplus = 0.1;
 
 setInterval(() => {
     clearScreen();
@@ -70,7 +90,41 @@ setInterval(() => {
         player.angle += 0.05
     }
 
+    //player.angle += 0.05
+    /*
+    if(fov > toRadians(90)){
+        fovplus = -0.5
+    } else if (fov < toRadians(89)){
+        fovplus = 0.5
+    }
+
+    fov += fovplus;*/
+
 }, 1000/gameFps);
+
+/*setInterval(()=>{
+    fucknes += 0.001
+}, 1000)*/
+
+//let offSide = 0;
+//setInterval(() => {
+    /*console.log( (Math.abs((player.angle * (180 / Math.PI)) / 180)) )
+    offSide = (Math.abs((player.angle * (180 / Math.PI)) / 180));
+
+    checkA();
+    function checkA(){
+        if(offSide > 1){
+            checkB();
+        }
+        console.log('true: ' + offSide);
+    }
+
+    function checkB(){
+        offSide -= 1
+        checkA();
+    }
+
+}, 1000/60);*/
 
 
 function clearScreen(){
@@ -81,6 +135,11 @@ function clearScreen(){
 function movePlayer(){
     player.x += Math.cos(player.angle) * player.speed
     player.y += Math.sin(player.angle) * player.speed
+
+    player.x += Math.sin(player.angle) * player.sideSpeed
+    player.y += Math.cos(player.angle) * player.sideSpeed
+
+    console.log(toRadians(player.angle))
 }
 
 function outOfMapBounds(x, y){
@@ -133,8 +192,8 @@ function getHCollision(angle){
     const up = Math.abs(Math.floor(angle / Math.PI) % 2);
 
     const firstY = up 
-        ? Math.floor(player.y / tile_size) * tile_size + tile_size 
-        : Math.floor(player.y / tile_size) * tile_size
+        ? Math.floor(player.y / tile_size) * tile_size 
+        : Math.floor(player.y / tile_size) * tile_size + tile_size
 
     const firstX = player.x + (firstY - player.y) / Math.tan(angle);
 
@@ -151,13 +210,12 @@ function getHCollision(angle){
         : Math.floor(nextY / tile_size);
 
         if(outOfMapBounds(cellX, cellY)){
-            break
+        break
         }
         wall = map[cellY][cellX]
         if(!wall){
             nextX += xA
             nextY += yA
-        } else {
         }
         
     }
@@ -166,6 +224,41 @@ function getHCollision(angle){
         distance: distance(player.x, player.y, nextX, nextY),
         vertical: false,
     }
+    /*
+    const up = Math.abs(Math.floor(angle / Math.PI) % 2);
+    const firstY = up
+        ? Math.floor(player.y / CELL_SIZE) * CELL_SIZE
+        : Math.floor(player.y / CELL_SIZE) * CELL_SIZE + CELL_SIZE;
+    const firstX = player.x + (firstY - player.y) / Math.tan(angle);
+
+    const yA = up ? -CELL_SIZE : CELL_SIZE;
+    const xA = yA / Math.tan(angle);
+
+    let wall;
+    let nextX = firstX;
+    let nextY = firstY;
+    while (!wall) {
+        const cellX = Math.floor(nextX / CELL_SIZE);
+        const cellY = up
+        ? Math.floor(nextY / CELL_SIZE) - 1
+        : Math.floor(nextY / CELL_SIZE);
+
+        if (outOfMapBounds(cellX, cellY)) {
+        break;
+        }
+
+        wall = map[cellY][cellX];
+        if (!wall) {
+        nextX += xA;
+        nextY += yA;
+        }
+    }
+    return {
+        angle,
+        distance: distance(player.x, player.y, nextX, nextY),
+        vertical: false,
+    };
+    */
 }
 
 function castRay(angle){
@@ -183,7 +276,7 @@ function fixFishEye(distance, angle, playerAngle) {
 
 function getRays(){
     const inintalAngle = player.angle - fov/2;
-    const numberOfRay = screenWidth / 1;  //<== change number of rays
+    const numberOfRay = screenWidth * fucknes;  //<== change number of rays
     const angleStep = fov / numberOfRay;
     return Array.from({ length: numberOfRay }, (_, i) => {
         const angle = inintalAngle + i * angleStep;
@@ -214,7 +307,7 @@ function renderScene(rays){
 function renderMinimap(posX = 0, posY = 0, scale = 1, rays){
 
     //draws tiles on the minimap
-    const tileSize = scale * tile_size;
+    const tileSize = scale * (tile_size);
     map.forEach((row, y) => {
         row.forEach((cell, x) => {
             if(cell){
@@ -274,6 +367,10 @@ function toRadians(deg){
 
 let leftArrow = false;
 let rightArrow = false;
+let keyW = false;
+let keyA = false;
+let keyS = false;
+let keyD = false;
 
 document.addEventListener('keydown', (e)=>{
     if(e.key == 'ArrowUp'){
@@ -288,6 +385,18 @@ document.addEventListener('keydown', (e)=>{
     if(e.key == 'ArrowRight'){
         rightArrow = true;
     }
+    if(e.key == 'a'){
+        player.sideSpeed = 2
+    }
+    if(e.key == 'w'){
+        player.speed = 2
+    }
+    if(e.key == 's'){
+        player.speed = -2
+    }
+    if(e.key == 'd'){
+        player.sideSpeed = -2
+    }
 })
 
 document.addEventListener('keyup', (e)=>{
@@ -299,6 +408,12 @@ document.addEventListener('keyup', (e)=>{
     }
     if(e.key == 'ArrowRight'){
         rightArrow = false;
+    }
+    if(e.key == 'a' || e.key == 'd'){
+        player.sideSpeed = 0
+    }
+    if(e.key == 'w' || e.key == 's'){
+        player.speed = 0
     }
 })
 
